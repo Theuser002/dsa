@@ -1,0 +1,29 @@
+name: Weekly DSA Report
+
+on:
+  schedule:
+    # Run at 18:00 VN time (11:00 UTC) every Friday
+    - cron: '0 11 * * 5'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet requests pytz
+
+      - name: Run weekly check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python .github/scripts/weekly_check.py

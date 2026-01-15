@@ -1,0 +1,80 @@
+name: Morning Reminder
+
+on:
+  schedule:
+    # Run at 09:00 VN time (02:00 UTC) Monday to Friday
+    - cron: '0 2 * * 1-5'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  morning-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet requests pytz
+
+      - name: Send morning reminder
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python - <<'EOF'
+          import requests
+          import os
+          from datetime import datetime
+          import pytz
+
+          ALFA_LEETCODE_API = "https://alfa-leetcode-api.onrender.com"
+          TELEGRAM_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+          CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+
+          def send_telegram_message(message):
+              if not TELEGRAM_TOKEN or not CHAT_ID:
+                  print("Telegram credentials not configured")
+                  print(f"Message: {message}")
+                  return
+              url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+              payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+              try:
+                  response = requests.post(url, json=payload, timeout=10)
+                  response.raise_for_status()
+                  print("Message sent successfully")
+              except Exception as e:
+                  print(f"Failed to send message: {e}")
+
+          def get_daily_problem():
+              try:
+                  r = requests.get(f"{ALFA_LEETCODE_API}/daily", timeout=10)
+                  r.raise_for_status()
+                  return r.json()
+              except Exception as e:
+                  print(f"Failed to fetch daily problem: {e}")
+                  return None
+
+          vn_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+          now_vn = datetime.now(vn_tz)
+          
+          daily = get_daily_problem()
+          if daily:
+              title = daily['questionTitle']
+              difficulty = daily['difficulty']
+              link = daily['questionLink']
+              
+              message = f"☀️ *Chào buổi sáng! DSA Daily Challenge*\n\n"
+              message += f"📝 [{title}]({link})\n"
+              message += f"Độ khó: *{difficulty}*\n\n"
+              message += f"💪 Cùng nhau chinh phục bài hôm nay nhé!"
+              
+              send_telegram_message(message)
+          else:
+              send_telegram_message("⚠️ Không thể lấy thông tin bài Daily Problem hôm nay!")
+          EOF

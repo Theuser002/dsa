@@ -1,5 +1,9 @@
 *.pyc
+__pycache__/
 
 .env
 .venv/
+venv/
 
+# Keep data/ folder tracked (for daily_problems.json)
+!data/

@@ -1,0 +1,5 @@
+{
+  "punishment_per_week": 500000,
+  "min_problems_per_week": 3,
+  "description": "Nếu làm ít hơn 3 BÀI DAILY/tuần sẽ bị phạt 500k VND. Daily problems là những bài LeetCode Daily Challenge, không phải bài bất kỳ."
+}

@@ -1,0 +1,29 @@
+name: Daily DSA Check
+
+on:
+  schedule:
+    # Run at 23:55 VN time (16:55 UTC) Monday to Friday
+    - cron: '55 16 * * 1-5'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  daily-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet requests pytz
+
+      - name: Run daily check
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python .github/scripts/daily_check.py
